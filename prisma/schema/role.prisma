@@ -1,0 +1,82 @@
+// 角色表定义
+model Role {
+    id          Int              @id @default(autoincrement()) // 角色 ID，自动递增
+    name        String           @unique @db.VarChar(50) // 角色名称，长度限制为50
+    description String?          @db.VarChar(255) // 角色描述，最多255个字符
+    users       User[]           @relation("UserRole") // 与用户表的关系（一个角色可被多个用户使用）
+    permissions RolePermission[] @relation("RoleToRolePermission") // 与角色权限关联表的关系
+
+    // 角色的继承关系
+    parentRoles RoleHierarchy[] @relation("ParentRole")
+    childRoles  RoleHierarchy[] @relation("ChildRole")
+
+    // 角色的约束（静态和动态分离职责）
+    constraints        RoleConstraint[] @relation("RoleConstraintRole")
+    constrainedByRoles RoleConstraint[] @relation("RoleConstrainedByRole")
+
+    sessionConstraints        RoleSessionConstraint[] @relation("RoleSessionConstraintRole")
+    sessionConstrainedByRoles RoleSessionConstraint[] @relation("RoleSessionConstrainedByRole")
+
+    createdAt DateTime @default(now()) // 创建时间
+    updatedAt DateTime @updatedAt // 更新时间
+}
+
+// 角色层次结构表定义，用于角色的继承关系
+model RoleHierarchy {
+    id           Int @id @default(autoincrement()) // 自增 ID
+    parentRoleId Int // 父角色 ID
+    childRoleId  Int // 子角色 ID
+
+    parentRole Role @relation("ParentRole", fields: [parentRoleId], references: [id], onDelete: Cascade)
+    childRole  Role @relation("ChildRole", fields: [childRoleId], references: [id], onDelete: Cascade)
+
+    @@unique([parentRoleId, childRoleId]) // 父角色和子角色组合必须唯一
+}
+
+// 角色约束表定义（静态分离职责 SSD）
+model RoleConstraint {
+    id           Int @id @default(autoincrement()) // 自增 ID
+    roleId       Int // 角色 ID
+    constraintId Int // 被约束的角色 ID
+
+    role            Role @relation("RoleConstraintRole", fields: [roleId], references: [id], onDelete: Cascade)
+    constrainedRole Role @relation("RoleConstrainedByRole", fields: [constraintId], references: [id], onDelete: Cascade)
+
+    // 防止同一用户同时分配到两个相互约束的角色
+    @@unique([roleId, constraintId])
+}
+
+// 动态分离职责表定义（DSD），用于管理会话中哪些角色不能同时激活
+model RoleSessionConstraint {
+    id            Int @id @default(autoincrement()) // 自增 ID
+    roleId        Int // 角色 ID
+    sessionRoleId Int // 被约束的会话角色 ID
+
+    role        Role @relation("RoleSessionConstraintRole", fields: [roleId], references: [id], onDelete: Cascade)
+    sessionRole Role @relation("RoleSessionConstrainedByRole", fields: [sessionRoleId], references: [id], onDelete: Cascade)
+
+    @@unique([roleId, sessionRoleId])
+}
+
+// 权限表定义
+model Permission {
+    id          Int              @id @default(autoincrement()) // 权限 ID，自动递增
+    name        String           @unique @db.VarChar(50) // 权限名称，长度限制为50
+    description String?          @db.VarChar(255) // 权限描述，最多255个字符
+    roles       RolePermission[] @relation("PermissionToRolePermission") // 与角色权限关联表的关系
+
+    createdAt DateTime @default(now()) // 创建时间
+    updatedAt DateTime @updatedAt // 更新时间
+}
+
+// 角色权限关联表定义
+model RolePermission {
+    id           Int @id @default(autoincrement()) // 自增 ID
+    roleId       Int // 角色外键
+    permissionId Int // 权限外键
+
+    role       Role       @relation("RoleToRolePermission", fields: [roleId], references: [id], onDelete: Cascade) // 关联的角色
+    permission Permission @relation("PermissionToRolePermission", fields: [permissionId], references: [id], onDelete: Cascade) // 关联的权限
+
+    @@unique([roleId, permissionId]) // 保证 roleId 和 permissionId 的唯一性
+}

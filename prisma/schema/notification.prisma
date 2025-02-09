@@ -1,0 +1,29 @@
+enum NotificationType {
+  COMMENT_LIKE      // 评论点赞
+  ARTICLE_LIKE      // 文章点赞
+  ARTICLE_COMMENT   // 评论
+  COMMENT_COMMENT   // 评论回复 
+  FOLLOW            // 关注
+  OFFICIAL          // 官方通知
+  ARTICLE_FAVORITE  // 收藏
+  SYSTEM            // 系统通知
+}
+
+model Notification {
+  id          Int              @id @default(autoincrement())
+  recipientId String           @db.Char(16) // 接收通知的用户 ID，16 位数字
+  senderId    String           @db.Char(16) // 触发通知的用户 ID，16 位数字
+  type        NotificationType // 通知类型
+  contentId   String           @db.Char(16) // 关联内容 ID
+  title       String?           @db.VarChar(255) // 通知标题
+  isRead      Boolean          @default(false)  // 是否已读
+  readAt      DateTime?        // 阅读时间
+  createdAt   DateTime         @default(now())  // 创建时间
+  updatedAt   DateTime         @updatedAt       // 更新时间
+  isDeleted   Boolean          @default(false)  // 是否逻辑删除
+
+  @@index([recipientId])
+  @@index([type])   
+  @@index([isRead])         
+  @@map("notifications")      
+}

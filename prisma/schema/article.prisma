@@ -1,0 +1,56 @@
+model Article {
+  id            String    @id @default(uuid()) @db.VarChar(16) // 主键：16位UUID
+  author_id     String    @db.VarChar(16) // 作者ID
+  title         String?   @db.VarChar(255) // 标题，草稿时可以为空
+  content       String?   @db.Text // 内容，草稿时可以为空
+  cover_image   String?   @db.VarChar(255) // 封面图（可为空）
+  summary       String?   @db.Text // AI生成的摘要（可为空）
+  active_status Boolean   @default(false) // 激活状态
+  audit_status  Int       @default(0) // 审核状态: 0 未审核, 1 审核完毕, 2 审核中
+  is_public     Boolean   @default(false) // 是否公开
+  is_draft      Boolean   @default(true) // 是否为草稿，默认是草稿
+  created_at    DateTime  @default(now()) // 创建时间
+  updated_at    DateTime  @updatedAt // 更新时间
+  published_at  DateTime? // 审核通过后的发布时间
+  is_deleted    Boolean   @default(false) // 是否逻辑删除
+  category_id   Int? // 分类ID（可为空）
+  category      Category? @relation(fields: [category_id], references: [id], onDelete: SetNull) // 外键关联分类，允许为空
+  tags          TagMap[] // 多对多关联到标签
+
+  @@index([author_id, is_public]) // 索引：作者ID + 是否公开
+  @@map("article") // 映射到数据库表名
+}
+
+model Tag {
+  id         Int      @id @default(autoincrement()) // 标签主键
+  name       String   @unique @db.VarChar(50) // 标签名称，唯一
+  is_deleted Boolean  @default(false) // 是否逻辑删除
+  created_at DateTime @default(now()) // 创建时间
+  updated_at DateTime @updatedAt // 更新时间
+  tag_map    TagMap[]
+
+  @@map("tag") // 表名映射到数据库中的 tag 表
+}
+
+model TagMap {
+  article_id String // 文章 ID（与 Article.id 类型一致）
+  tag_id     Int // 标签 ID
+  article    Article @relation(fields: [article_id], references: [id], onDelete: Cascade) // 外键关联文章
+  tag        Tag     @relation(fields: [tag_id], references: [id], onDelete: Cascade) // 外键关联标签
+
+  @@id([article_id, tag_id]) // 复合主键：文章ID + 标签ID
+  @@map("tagmap") // 表名映射到数据库中的 tagmap 表
+}
+
+model Category {
+  id          Int      @id @default(autoincrement()) // 分类主键
+  name        String   @unique @db.VarChar(50) // 分类名称
+  description String?  @db.Text // 分类描述（可选）
+  is_deleted  Boolean  @default(false) // 是否逻辑删除
+  created_at  DateTime @default(now()) // 创建时间
+  updated_at  DateTime @updatedAt // 更新时间
+
+  articles Article[] // 关联到文章的一对多关系
+
+  @@map("category") // 表名映射到数据库中的 category 表
+}

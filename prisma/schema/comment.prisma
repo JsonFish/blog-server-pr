@@ -1,0 +1,23 @@
+model ArticleComment {
+  id         String    @id @default(uuid()) @db.VarChar(16) // 主键，UUID 或 NanoID，字符串类型
+  content    String    @db.Text // 评论内容
+  user_id    String    @db.Char(16) // 评论作者 ID
+  to_user_id String?   @db.Char(16) // 被回复的用户 ID
+  article_id String    @db.Char(16) // 所属文章 ID
+  parent_id  String?   @db.VarChar(16) // 父评论 ID（引用本表主键）
+  root_id    String?   @db.VarChar(16) // 根评论 ID（引用本表主键）
+  type       Int       @default(0) // 类型：0=根评论，1=子评论
+  depth      Int       @default(0) // 当前评论的嵌套深度
+  image_urls String?   @db.VarChar(1024) // 以逗号分隔存储最多三个图片 URL
+  is_pinned  Boolean   @default(false) // 置顶标志
+  is_hidden  Boolean   @default(false) // 隐藏标志
+  is_deleted Boolean   @default(false) // 软删除标志
+  is_quoted  Boolean   @default(false) // 是否为引用回复
+  deleted_at DateTime? // 记录删除时间
+  created_at DateTime  @default(now()) // 创建时间
+  updated_at DateTime  @updatedAt // 更新时间，自动更新
+
+  @@index([article_id])
+  @@index([parent_id])
+  @@map("article_comment")
+}

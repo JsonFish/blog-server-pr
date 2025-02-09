@@ -1,0 +1,12 @@
+model ArticleCollection {
+  id      Int    @id @default(autoincrement())
+  user_id String @db.Char(16)
+
+  article_id String @db.Char(16)
+
+  created_at DateTime @default(now()) // 创建时间
+  is_deleted Boolean  @default(false)
+
+  @@unique([user_id, article_id])
+  @@index([user_id, article_id, is_deleted])
+}

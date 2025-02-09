@@ -1,0 +1,16 @@
+model UserFollow {
+    id             Int    @id @default(autoincrement()) // 自增主键
+    user_id        String @db.VarChar(16) // 关注者的用户ID，长度16（UUID）
+    target_user_id String @db.VarChar(16) // 被关注者的用户ID，长度16（UUID）
+
+    user        User @relation("user_follows", fields: [user_id], references: [id], onDelete: Cascade) // 关注者
+    target_user User @relation("user_followed", fields: [target_user_id], references: [id], onDelete: Cascade) // 被关注者
+
+    created_at DateTime @default(now()) // 关注时间
+    is_deleted Boolean  @default(false) // 逻辑删除标志
+
+    @@unique([user_id, target_user_id]) // 唯一约束，防止重复关注
+    @@index([user_id]) // 索引：快速查询用户的关注列表
+    @@index([target_user_id]) // 索引：快速查询用户的粉丝列表
+    @@map("user_follow") // 数据库中的表名映射
+}

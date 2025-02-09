@@ -1,0 +1,46 @@
+model Chat {
+  id        Int        @id @default(autoincrement()) // 聊天的唯一标识
+  user1Id   String // 第一个用户的 ID
+  user2Id   String // 第二个用户的 ID
+  user1     User       @relation("User1Chats", fields: [user1Id], references: [id])
+  user2     User       @relation("User2Chats", fields: [user2Id], references: [id])
+  messages  Message[] // 与聊天关联的消息
+  chatUsers ChatUser[] // 与聊天关联的用户
+  createdAt DateTime   @default(now()) // 聊天创建时间
+
+  // 唯一约束，确保每对用户只有一条聊天记录
+  @@unique([user1Id, user2Id])
+  // 索引，优化查询用户相关的聊天
+  @@index([user1Id, user2Id])
+  @@map("unique_chat")
+}
+
+model ChatUser {
+  id          Int       @id @default(autoincrement()) // 唯一标识
+  userId      String // 用户 ID
+  chatId      Int // 聊天 ID
+  user        User      @relation(fields: [userId], references: [id])
+  chat        Chat      @relation(fields: [chatId], references: [id])
+  isDeleted   Boolean   @default(false) // 标识用户是否软删除聊天
+  deletedAt   DateTime? // 用户删除聊天的时间
+  unreadCount Int       @default(0) // 未读消息计数
+
+  // 唯一约束，确保每个用户与聊天的关系唯一
+  @@unique([userId, chatId])
+  // 索引，优化按用户和聊天 ID 查询
+  @@index([userId, chatId])
+}
+
+model Message {
+  id      Int    @id @default(autoincrement()) // 消息唯一标识
+  content String @db.Text // 消息内容，长文本类型
+  user_id String @db.VarChar(16)
+  chat_id Int
+
+  chat       Chat     @relation(fields: [chat_id], references: [id])
+  created_at DateTime @default(now()) // 消息创建时间
+  is_revoked Boolean  @default(false) // 消息是否撤回
+
+  // 索引，优化按聊天和时间查询消息
+  @@index([chat_id])
+}

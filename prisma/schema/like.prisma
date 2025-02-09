@@ -1,0 +1,32 @@
+model ArticleLike {
+  id         Int    @id @default(autoincrement()) // 自增主键
+  user_id    String @db.Char(16) // 点赞用户的ID，16位纯数字字符串
+  article_id String @db.Char(16) // 被点赞的文章ID，16位纯数字字符串
+
+  created_at DateTime @default(now()) // 创建时间
+  updated_at DateTime @updatedAt // 更新时间，每次点赞/取消点赞时更新
+
+  is_active Boolean @default(true) // 点赞状态，默认为 true 表示已点赞
+
+  // 添加唯一约束，防止同一用户对同一文章多次点赞
+  @@unique([user_id, article_id])
+  @@index([article_id, is_active])
+  @@index([user_id])
+}
+
+model CommentLike {
+  id         Int    @id @default(autoincrement()) // 自增主键
+  user_id    String @db.Char(16) // 点赞用户的ID，16位纯数字字符串
+  comment_id String @db.Char(16) // 被点赞的评论ID，与 ArticleComment 的主键保持一致
+
+  created_at DateTime @default(now()) // 创建时间
+  updated_at DateTime @updatedAt // 更新时间，每次点赞/取消点赞时更新
+
+  is_active Boolean @default(true) // 点赞状态，默认为 true 表示已点赞
+
+  // 添加唯一约束，防止同一用户对同一评论多次点赞
+  @@unique([user_id, comment_id])
+  @@index([comment_id, is_active]) // 按评论查询激活的点赞
+  @@index([user_id, is_active]) // 按用户查询激活的点赞
+  @@index([comment_id, user_id]) // 查询某用户对某评论的点赞
+}

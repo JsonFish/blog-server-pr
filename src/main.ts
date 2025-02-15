@@ -33,8 +33,8 @@ async function bootstrap() {
   app.useGlobalPipes(
     new ValidationPipe({
       whitelist: true, // 自动剔除非 DTO 定义的字段
-      forbidNonWhitelisted: true, // 如果请求体中有非 DTO 定义的字段，则抛出错误
       transform: true, // 自动转换 DTO 中的类型
+      stopAtFirstError: true, // 在第一个错误时停止验证
     }),
   );
 
